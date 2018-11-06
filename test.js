@@ -40,12 +40,24 @@ float lighting(vec3 p, vec3 src) {
  return (scene(p + e) - scene(p - e)) / EPSILON;
 }
 
+vec4 main2() {
+ vec2 uv = gl_FragCoord.xy / resolution.xy * vec2(3., 1.);
+ vec3 n = vec3(0.);
+ if (uv.x < 1.) n.x = rotation.x / 360. + .5;
+ if (uv.x > 1. && uv.x < 2.) n.y = rotation.y / 180. + .5;
+ if (uv.x > 2.) n.z = rotation.z / 360.;
+ //n = mix(n, rotation.y, step(1., uv.x));
+ //n = mix(n, rotation.z, step(2., uv.x));
+ return vec4(step(vec3(uv.y), n), 1.);
+}
+
 void main() {
  gl_FragColor = vec2(0., 1.).xxxy;
+ gl_FragColor = main2();
  //if (mod(gl_FragCoord.x+gl_FragCoord.y, 6.)>1.) return;
  
- vec2 uv = 0.8 * vec2(1.5, -1.) * ((gl_FragCoord.xy / resolution) - .5) * resolution / resolution.x + .5;
- //vec2 uv = 0.8 * vec2(1.5, -1.) * ((gl_FragCoord.yx / resolution.yx) - .5) * resolution.yx / resolution.y + .5;
+ //vec2 uv = 0.8 * vec2(1.5, -1.) * ((gl_FragCoord.xy / resolution) - .5) * resolution / resolution.x + .5;
+ vec2 uv = 0.8 * vec2(1.5, -1.) * ((gl_FragCoord.yx / resolution.yx) - .5) * resolution.yx / resolution.y + .5;
  uv = uv * vec2(2., 1.);
  if (uv.x > 1.) uv.x -= 1.;
  //if (abs(uv.x - 1.) > 1.) return;
@@ -78,14 +90,14 @@ void main() {
  up = one.xyx;
  front = one.xxy;
  psp = mat3(right, up, front);
- psp *= rotX(rotation.x * rad);
- psp *= rotY(rotation.y * rad);
- psp *= rotZ(-rotation.z * rad);
+ //psp *= rotX(rotation.x * rad);
+ //psp *= rotY(rotation.y * rad);
+ //psp *= rotZ(-rotation.z * rad);
  
- //psp *= rotZ(rotation.y * sign(rotation.z) * rad + pi * sign(rotation.z));
- //psp *= rotX(-rotation.z * rad);
- //psp *= rotX(pi / 2.);
- //psp *= rotY(-rotation.x * rad);
+ psp *= rotZ(rotation.y * sign(rotation.z) * rad + pi * sign(rotation.z));
+ psp *= rotX(-rotation.z * rad);
+ psp *= rotX(pi / 2.);
+ psp *= rotY(-rotation.x * rad);
 
  cam *= psp;
  front *= psp;
@@ -111,8 +123,10 @@ void main() {
   n = max(0., lighting(cam + dist * dir, vec3(-4.))) + .2;
  }
  //float n = 1. - .2 * dist;
- gl_FragColor = vec2(n, 1.).xxxy;
- if (length(cam + dist * dir + vec3(0., .5, 0.)) > 1. + EPSILON) gl_FragColor.rg *= .5;
- else gl_FragColor.gb *= .5; //gl_FragColor = vec4(uv.x, 0., uv.y, 1.); //gl_FragColor.rgb = 1. - clamp(gl_FragColor.rgb, vec3(0.), vec3(1.)) * 1.;
+ vec4 col = vec2(n, 1.).xxxy;
+ if (length(cam + dist * dir + vec3(0., .5, 0.)) > 1. + EPSILON) col.rg *= .5;
+ else col.gb *= .5; //gl_FragColor = vec4(uv.x, 0., uv.y, 1.); //gl_FragColor.rgb = 1. - clamp(gl_FragColor.rgb, vec3(0.), vec3(1.)) * 1.;
+ gl_FragColor = mix(col, gl_FragColor, .25);
+ gl_FragColor.a = 1.;
 }
 `;
