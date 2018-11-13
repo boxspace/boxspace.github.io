@@ -17,6 +17,7 @@ function setupUniforms(gl, uniforms, vars) {
 
 // Sets uniforms before rendering each frame
 function updateUniforms(gl, uniforms, vars) {
+ gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
  gl.uniform1f(uniforms.time, vars.time);
 }
 
@@ -55,6 +56,9 @@ function main() {
  const vars = {"time": 0, "dt": 0};
  setupUniforms(gl, uniforms, vars);
  
+ // Resize canvas to proper size
+ resize();
+ 
  // Render loop
  function render(elapsed) {
   // Calculate time values
@@ -80,6 +84,9 @@ function main() {
 //
 function fullScreen() {
  const canvas = document.getElementById("canvas");
+ 
+ // Add resize listener to dynamically scale window to full size
+ window.onresize = resize;
  
  // Find available fullscreen and pointerlock methods
  canvas.requestFullscreen = canvas.requestFullscreen ||
@@ -113,12 +120,28 @@ function fullScreen() {
  }
 }
 
+function resize() {
+ const canvas = document.getElementById("canvas");
+ const gl = canvas.getContext("webgl");
+  
+ // Set canvas resolution to window size
+ canvas.width = window.innerWidth;
+ canvas.height = window.innerHeight;
+ 
+ // Resize canvas to window size
+ canvas.style.width = window.innerWidth + "px";
+ canvas.style.height = window.innerHeight + "px";
+ 
+ // Resize render target
+ gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+}
+
 function pointerLockChange() {
  // Check if pointer just locked or unlocked
 }
 
-function onmousemove() {
- // pass
+function onmousemove(event) {
+ console.log(event.movementX + " " + event.movementY);
 }
 
 
