@@ -136,8 +136,9 @@ function resize() {
  gl.viewport(0, 0, window.innerWidth, window.innerHeight);
 }
 
-function pointerLockChange() {
+function pointerLockChange(ev) {
  // Check if pointer just locked or unlocked
+ console.log("Pointer lock change: " + (document.pointerLockElement == canvas));
 }
 
 function onmousemove(event) {
@@ -212,6 +213,14 @@ function initBuffer(gl) {
   gl.STATIC_DRAW);
  
  return positionBuffer;
+}
+
+
+
+// Helper for adding texture
+function initTexture() {
+ const texture = gl.createTexture();
+ gl.bindTexture(gl.TEXTURE_2D, texture); 
 }
 
 
