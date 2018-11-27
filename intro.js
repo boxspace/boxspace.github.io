@@ -3,7 +3,11 @@ const myUniforms = [
  "resolution",
  "time",
  "mouse",
+ "tex",
 ];
+
+// Store variables here, used in setting uniforms below
+const vars = {time: 0, dt: 0, mouse: {x: 0, y: 0}};
 
 
 
@@ -13,12 +17,14 @@ function setupUniforms(gl, uniforms, vars) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
  gl.uniform1f(uniforms.time, vars.time);
  gl.uniform2f(uniforms.mouse, 0, 0);
+ gl.uniform1i(uniforms.tex, 0);
 }
 
 // Sets uniforms before rendering each frame
 function updateUniforms(gl, uniforms, vars) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
  gl.uniform1f(uniforms.time, vars.time);
+ gl.uniform2f(uniforms.mouse, vars.mouse.x, -vars.mouse.y);
 }
 
 
@@ -42,6 +48,9 @@ function main() {
  const shaderProgram = initShaderProgram(gl);
  const posBuffer = initBuffer(gl);
  
+ // Initialize textures
+ initTexture(gl);
+ 
  // Setup shader program with uniforms and vertices
  const uniforms = initUniforms(gl, shaderProgram, myUniforms);
  const program = {
@@ -52,8 +61,7 @@ function main() {
  prepareScene(gl, program, uniforms);
  
  
- // Setup uniform vlaues
- const vars = {"time": 0, "dt": 0};
+ // Setup uniform values
  setupUniforms(gl, uniforms, vars);
  
  // Resize canvas to proper size
@@ -143,6 +151,8 @@ function pointerLockChange(ev) {
 
 function onmousemove(event) {
  console.log(event.movementX + " " + event.movementY);
+ vars.mouse.x += event.movementX;
+ vars.mouse.y += event.movementY;
 }
 
 
@@ -218,9 +228,20 @@ function initBuffer(gl) {
 
 
 // Helper for adding texture
-function initTexture() {
+function initTexture(gl) {
  const texture = gl.createTexture();
- gl.bindTexture(gl.TEXTURE_2D, texture); 
+ gl.activeTexture(gl.TEXTURE0);
+ gl.bindTexture(gl.TEXTURE_2D, texture);
+ 
+ const img = new Image();
+ img.onload = function() {
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+ }
+ img.src = "shadertoy-london.jpg";
 }
 
 
@@ -237,9 +258,6 @@ function prepareScene(gl, program, uniforms) {
  
  // Set shader program
  gl.useProgram(program.program);
- 
- // Set uniforms
- const canvas = document.getElementById("canvas"); 
 }
 
 
