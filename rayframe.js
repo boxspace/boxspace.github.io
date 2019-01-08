@@ -88,6 +88,9 @@ function updateUniforms(gl, uniforms, vars) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
  gl.uniform1f(uniforms.time, vars.time);
  gl.uniform2f(uniforms.mouse, vars.mouse.x, -vars.mouse.y);
+ 
+ gl.uniform1f(uniforms.theta, vars.theta);
+ gl.uniform1f(uniforms.phi, vars.phi);
 }
 
 
@@ -222,6 +225,10 @@ function onmousemove(event) {
  console.log(event.movementX + " " + event.movementY);
  vars.mouse.x += event.movementX;
  vars.mouse.y += event.movementY;
+ 
+ vars.theta += 6.28 * event.movementX / window.innerWidth;
+ vars.phi -= 1.57 * event.movementY / window.innerHeight;
+ vars.phi = Math.max(-1.57, Math.min(1.57, vars.phi));
 }
 
 
