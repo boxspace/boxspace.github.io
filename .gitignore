@@ -1,2 +1,5 @@
 # Ignore nano backup files (filename~)
 *~
+
+# Ignore vim backup files (.filename.swp)
+.*.swp

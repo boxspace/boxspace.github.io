@@ -1,7 +1,7 @@
 // Name uniforms here, appear as fields in uniforms object from initUniforms()
 const myUniforms = [
  "resolution",
-// "time",
+ //"time",
  "mouse",
  "tex",
  
@@ -35,6 +35,7 @@ const vars = {
  
  maxDist: 10,
  currCube: 1,
+ currPos: {x: 0, y: 0, z: 0},
  right: {x: 1, y: 0, z: 0},
  up: {x: 0, y: 1, z: 0},
  facing: {x: 0, y: 0, z: 1},
@@ -42,7 +43,7 @@ const vars = {
  phi: 0,
  fov: 100,
  
- map: -1,
+ mapImg: -1,
  mapSize: {x: 0, y: 0},
  time: 0,
  
@@ -56,15 +57,15 @@ const vars = {
 
 
 // Sets uniforms at start of program
-function setupUniforms(gl, uniforms, vars) {
- const canvas = document.getElementById("canvas");
+function updateUniforms(gl, uniforms, vars) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-// gl.uniform1f(uniforms.time, vars.time);
- gl.uniform2f(uniforms.mouse, 0, 0);
+ gl.uniform1f(uniforms.time, vars.time);
+ gl.uniform2f(uniforms.mouse, vars.mouse.x, -vars.mouse.y);
  gl.uniform1i(uniforms.tex, 0);
  
- gl.uniform1f(uniforms.maxDist, 10);
+ gl.uniform1f(uniforms.maxDist, vars.maxDist);
  gl.uniform1i(uniforms.currCube, vars.currCube);
+ gl.uniform3f(uniforms.currPos, vars.currPos.x, vars.currPos.y, vars.currPos.z);
  gl.uniform3f(uniforms.right, vars.right.x, vars.right.y, vars.right.z);
  gl.uniform3f(uniforms.up, vars.up.x, vars.up.y, vars.up.z);
  gl.uniform3f(uniforms.facing, vars.facing.x, vars.facing.y, vars.facing.z);
@@ -83,14 +84,10 @@ function setupUniforms(gl, uniforms, vars) {
  gl.uniform3f(uniforms.tintColor, vars.tintColor.r, vars.tintColor.g, vars.tintColor.b);
 }
 
-// Sets uniforms before rendering each frame
-function updateUniforms(gl, uniforms, vars) {
- gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
- gl.uniform1f(uniforms.time, vars.time);
- gl.uniform2f(uniforms.mouse, vars.mouse.x, -vars.mouse.y);
+
+
+function updateVars() {
  
- gl.uniform1f(uniforms.theta, vars.theta);
- gl.uniform1f(uniforms.phi, vars.phi);
 }
 
 
@@ -131,7 +128,7 @@ function main() {
  
  
  // Setup uniform values
- setupUniforms(gl, uniforms, vars);
+ updateUniforms(gl, uniforms, vars);
  
  // Resize canvas to proper size
  resize();
@@ -214,6 +211,8 @@ function resize() {
  // Resize canvas to window size
  canvas.style.width = window.innerWidth + "px";
  canvas.style.height = window.innerHeight + "px";
+ 
+ gl.viewport(0, 0, window.innerWidth, window.innerHeight);
 }
 
 function pointerLockChange(ev) {
@@ -306,6 +305,7 @@ function initBuffer(gl) {
 // Helper for adding texture
 function initTexture(gl) {
  const texture = gl.createTexture();
+ gl.activeTexture(gl.TEXTURE0);
  gl.bindTexture(gl.TEXTURE_2D, texture);
  
  const img = new Image();
@@ -319,7 +319,9 @@ function initTexture(gl) {
   vars.mapSize.x = img.width;
   vars.mapSize.y = img.height;
  }
- img.src = "shadertoy-london.jpg";
+ //img.src = "shadertoy-london.jpg";
+ img.src = "map_test.png";
+ return texture;
 }
 
 
@@ -329,7 +331,7 @@ function initFramebuffer(gl, texture) {
  const frameBuffer = gl.createFramebuffer();
  
  // Bind it
- //gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+ gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
  
  // Attach it
  gl.framebufferTexture2D(
@@ -357,7 +359,7 @@ function targetFramebuffer(gl, framebuffer, texture) {
 
 function targetScene(gl, texture) {
  // Render to the canvas
- gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+ //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
  
  // Use given texture as input
  gl.bindTexture(gl.TEXTURE_2D, texture);

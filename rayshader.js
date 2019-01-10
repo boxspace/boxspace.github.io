@@ -10,6 +10,7 @@ uniform float theta;
 uniform float phi;
 uniform float fov;
 
+uniform sampler2D tex;
 uniform sampler2D mapImg;
 uniform vec2 mapSize;
 uniform float time;
@@ -24,8 +25,14 @@ uniform vec3 tintColor;
 const vec3 fogColor = vec3(0.6, 0.5, 0.5);
 const int maxIter = 100;
 
-float rand(float n) {
-    return fract(exp(sqrt(n) + 3.));
+highp float rand(vec2 co)
+{
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(co.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
 }
 
 float getLinks(int cube, int side)
@@ -122,7 +129,7 @@ vec3 raycast(int startC, vec3 startPos, vec3 startDir, float startDist)
         if (bestDist > .8) {}
         if (c == tintCubeA - 1 && offset == tintSideA) tint = vec4(mix(tintColor.rgb, tint.rgb, tint.a), 1. - (1. - tint.a) * (1. - .3));
         if (c == tintCubeB - 1 && offset == tintSideB) tint = vec4(mix(tintColor.rgb, tint.rgb, tint.a), 1. - (1. - tint.a) * (1. - .3));
-        if (true || next == -1 || dist + bestDist > maxDist)
+        if (rand(vec2(next * 6 + offset, floor(time))) < 1.5 && next == -1 || dist + bestDist > maxDist)
         {
             //return vec3(1. - clamp((dist + bestDist) / maxDist, 0., 1.));
             //return bestSide * .5 + .5;
