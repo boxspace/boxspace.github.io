@@ -39,12 +39,15 @@ float getLinks(int cube, int side)
 {
     float cb = float(cube);
     float sd = float(side);
-    vec2 loc = vec2(mod(cb * 3. + floor(sd / 2.), mapSize.x), floor(cb * 3. / mapSize.x));
+    //vec2 loc = vec2(mod(cb * 3. + floor(sd / 2.), mapSize.x), floor(cb * 3. / mapSize.x));
+    vec2 loc = vec2(sd, cb);
     vec2 lc = (floor(loc) + .5) / mapSize;
-    vec2 d = texture2D(mapImg, lc).rb * 256.;
+    //vec2 d = texture2D(mapImg, lc).rb * 256.;
+    vec2 d = texture2D(mapImg, lc).rg * 256.;
     //d = lc * 1000.;
     //d = loc;
-    return floor(mix(d.x, d.y, mod(sd, 2.)));
+    return floor(d.x);
+    //return floor(mix(d.x, d.y, mod(sd, 2.)));
     //return links[cube * 6 + side];
 }
 
@@ -52,13 +55,16 @@ float getTrans(int cube, int side)
 {
     float cb = float(cube);
     float sd = float(side);
-    vec2 loc = vec2(mod(cb * 3. + floor(sd / 2.), mapSize.x), floor(cb * 3. / mapSize.x));
+    //vec2 loc = vec2(mod(cb * 3. + floor(sd / 2.), mapSize.x), floor(cb * 3. / mapSize.x));
+    vec2 loc = vec2(sd, cb);
     vec2 lc = (floor(loc) + .5) / mapSize;
-    vec2 d = texture2D(mapImg, lc).ga * 256.;
-    d.y -= 1.;
+    //vec2 d = texture2D(mapImg, lc).ga * 256.;
+    vec2 d = texture2D(mapImg, lc).rg * 256.;
+    //d.y -= 1.;
     //d = lc * 1000.;
     //d = loc;
-    return floor(mix(d.x, d.y, mod(sd, 2.)));
+    return floor(d.y);
+    //return floor(mix(d.x, d.y, mod(sd, 2.)));
     //return trans[cube * 6 + side];
     //return 0.;
 }
@@ -102,6 +108,7 @@ vec3 raycast(int startC, vec3 startPos, vec3 startDir, float startDist)
         vec3 objPos = startPos;
         int objC = startC;
         float t = -1. * dot(pos - objPos, dir);
+        // Draw self
         if (c == objC && t > 0. && (i > 0 || length(pos - objPos) > .1) && length(pos - objPos + t * dir) < .1) {
             bestDist = t;
             return mix(vec3(0., length(pos - objPos + t * dir) / .1, 0.), fogColor, sqrt(min(2. * (dist + bestDist) / maxDist, 1.)));
@@ -134,7 +141,6 @@ vec3 raycast(int startC, vec3 startPos, vec3 startDir, float startDist)
             //return vec3(1. - clamp((dist + bestDist) / maxDist, 0., 1.));
             //return bestSide * .5 + .5;
             tint.rgb = vec3(1.);
-            //if (c * (c - 4) * (c - 5) == 0 || (c - 6) * (c - 8) * (c - 12) == 0) tint.rgb = vec3(1., .5, 0.);
             //float d = mod(float(c), 4.);
             //if (d < 2.) tint.rgb = vec3(1., .5, 0.);
             //else tint.rgb = vec3(0., .5, 1.);
@@ -175,6 +181,7 @@ void main()
     //for (int i = 0; i < 22; i++) view *= view2;
     cam *= view;
     vec3 col = raycast(currCube - 1, currPos, cam, 0.);
+    col.g = mix(col.g, col.b, .25);
     gl_FragColor = vec4(col, 1.);
 }
 `;

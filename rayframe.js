@@ -221,7 +221,7 @@ function pointerLockChange(ev) {
 }
 
 function onmousemove(event) {
- console.log(event.movementX + " " + event.movementY);
+ //console.log(event.movementX + " " + event.movementY);
  vars.mouse.x += event.movementX;
  vars.mouse.y += event.movementY;
  
@@ -312,8 +312,6 @@ function initTexture(gl) {
  img.onload = function() {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  gl.texParameteri(gl.TEXTURE_BASE_LEVEL, 0);
-  gl.texParameteri(gl.TEXTURE_MAX_LEVEL, 0);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -322,8 +320,10 @@ function initTexture(gl) {
   vars.mapSize.x = img.width;
   vars.mapSize.y = img.height;
  }
- //img.src = "shadertoy-london.jpg";
- img.src = "test.png";
+ 
+ img.map = new MapMaker(img);
+ img.map.write();
+ 
  return texture;
 }
 
