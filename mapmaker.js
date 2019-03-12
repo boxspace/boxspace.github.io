@@ -46,6 +46,7 @@ MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
   console.log(cubeB, sideB, inverted);
   this.bmp.set(sideA, cubeA - 1, colA);
   this.bmp.set(sideB, cubeB - 1, colB);
+  this.write();
 }
 
 MapMaker.prototype.write = function() {

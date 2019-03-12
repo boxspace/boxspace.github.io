@@ -56,6 +56,19 @@ const vars = {
 
 
 
+const bindings = {
+ Xpos: ["KeyD", "ArrowRight"],
+ Xneg: ["KeyA", "ArrowLeft"],
+ Ypos: ["KeyQ", "Space", "Slash"],
+ Yneg: ["KeyE", "LeftShift", "RightShift"],
+ Zpos: ["KeyW", "ArrowUp"],
+ Zneg: ["KeyS", "ArrowDown"],
+};
+
+const keys = {};
+
+
+
 // Sets uniforms at start of program
 function updateUniforms(gl, uniforms, vars) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
@@ -193,6 +206,10 @@ function fullScreen() {
  // Add mouse listener
  document.addEventListener("mousemove", onmousemove, false);
  
+ // Add keyboard listener
+ document.addEventListener("keydown", onkeydown, false);
+ document.addEventListener("keyup", onkeyup, false);
+ 
  // Fullscreen and pointer lock on click
  canvas.onclick = function() {
   canvas.requestFullscreen();
@@ -228,6 +245,14 @@ function onmousemove(event) {
  vars.theta += 6.28 * event.movementX / window.innerWidth;
  vars.phi -= 1.57 * event.movementY / window.innerHeight;
  vars.phi = Math.max(-1.57, Math.min(1.57, vars.phi));
+}
+
+function onkeydown(event) {
+ keys[event.code] = true;
+}
+
+function onkeyup(event) {
+ keys[event.code] = false;
 }
 
 
@@ -322,7 +347,8 @@ function initTexture(gl) {
  }
  
  img.map = new MapMaker(img);
- img.map.write();
+ img.map.add(1, 4, 2);
+ img.map.add(1, 5, 2, 3);
  
  return texture;
 }
