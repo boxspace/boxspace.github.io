@@ -1,5 +1,5 @@
-function MapMaker(img) {
-  this.bmp = new BMPImage(6, 3);
+function MapMaker(img, size) {
+  this.bmp = new BMPImage(6, size);
   this.image = img;
   this.map = {};
   MapMaker.inst = this;
