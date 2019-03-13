@@ -250,7 +250,7 @@ function updateVars(elapsed) {
  }.bind(this));
  
  if (pressed.Load) {
-  var index = prompt("To load a level, type its name. \nHit Enter to cancel.\n\n" + map.listSaved().join("\n"));
+  var index = prompt("To load a level, type its number. \nHit Enter to cancel.\n\n" + map.listSaved().join("\n"));
   if (map.loadMap(index)) {
    vars.currPos = {x: 0, y: 0, z: 0};
    vars.currVel = {x: 0, y: 0, z: 0};
