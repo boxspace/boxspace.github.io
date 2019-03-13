@@ -32,6 +32,13 @@ const vars = {
  time: 0,
  dt: 0,
  mouse: {x: 0, y: 0},
+ currVel: {x: 0, y: 0, z: 0},
+ targetVel: {x: 0, y: 0, z: 0},
+ speed: 0.75,
+ smoothing: 0.001,
+ height: 0.25,
+ width: 0.1,
+ maxPos: null,
  
  maxDist: 10,
  currCube: 1,
@@ -54,23 +61,36 @@ const vars = {
  tintColor: {r: 1, g: 0, b: 1},
 };
 
+var map;
+
+
+
+const dims = ["x", "y", "z"];
+
 
 
 const bindings = {
- Xpos: ["KeyD", "ArrowRight"],
- Xneg: ["KeyA", "ArrowLeft"],
- Ypos: ["KeyQ", "Space", "Slash"],
- Yneg: ["KeyE", "LeftShift", "RightShift"],
- Zpos: ["KeyW", "ArrowUp"],
- Zneg: ["KeyS", "ArrowDown"],
+ Xpos: new Set(["KeyD", "ArrowRight"]),
+ Xneg: new Set(["KeyA", "ArrowLeft"]),
+ Ypos: new Set(["KeyQ", "Space", "Slash"]),
+ Yneg: new Set(["KeyE", "ShiftLeft", "ShiftRight"]),
+ Zpos: new Set(["KeyW", "ArrowUp"]),
+ Zneg: new Set(["KeyS", "ArrowDown"]),
 };
 
-const keys = {};
+const pressed = {
+ Xpos: false,
+ Xneg: false,
+ Ypos: false,
+ Yneg: false,
+ Zpos: false,
+ Zneg: false,
+};
 
 
 
 // Sets uniforms at start of program
-function updateUniforms(gl, uniforms, vars) {
+function updateUniforms(gl, uniforms) {
  gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
  gl.uniform1f(uniforms.time, vars.time);
  gl.uniform2f(uniforms.mouse, vars.mouse.x, -vars.mouse.y);
@@ -99,8 +119,134 @@ function updateUniforms(gl, uniforms, vars) {
 
 
 
-function updateVars() {
+function setupVars() {
+ vars.maxPos = 0.5 - vars.width / 2;
+ vars.height = Math.min(vars.height, vars.maxPos);
+}
+
+
+
+function updateVars(elapsed) {
+ // Calculate time values
+ vars.dt = elapsed / 1000 - vars.time;
+ vars.time = elapsed / 1000;
  
+ vars.targetVel = {
+  x: pressed.Xpos - pressed.Xneg,
+  y: pressed.Ypos - pressed.Yneg,
+  z: pressed.Zpos - pressed.Zneg,
+ }
+ vars.targetVel = {
+  x: vars.targetVel.x * Math.cos(vars.theta) + vars.targetVel.z * Math.sin(vars.theta),
+  y: vars.targetVel.y,
+  z: vars.targetVel.x * -Math.sin(vars.theta) + vars.targetVel.z * Math.cos(vars.theta),
+ }
+ var tv = vars.targetVel;
+ vars.targetVel = {
+  x: tv.x * vars.right.x + tv.y * vars.right.y + tv.z * vars.right.z,
+  y: tv.x * vars.up.x + tv.y * vars.up.y + tv.z * vars.up.z,
+  z: tv.x * vars.facing.x + tv.y * vars.facing.y + tv.z * vars.facing.z,
+ }
+ 
+ var factor = Math.pow(vars.smoothing, vars.dt);
+ vars.currVel = {
+  x: vars.currVel.x * factor + vars.targetVel.x * (1 - factor),
+  y: vars.currVel.y * factor + vars.targetVel.y * (1 - factor),
+  z: vars.currVel.z * factor + vars.targetVel.z * (1 - factor),
+ }
+ vars.currPos = {
+  x: vars.currPos.x + vars.currVel.x * vars.dt,
+  y: vars.currPos.y + vars.currVel.y * vars.dt,
+  z: vars.currPos.z + vars.currVel.z * vars.dt,
+ }
+ 
+ dims.forEach(function (d, i) {
+  if (Math.abs(vars.currPos[d]) > vars.maxPos) {
+   var next = map.get(vars.currCube, i * 2 - Math.sign(vars.currPos[d]) * 0.5 + 0.5);
+   if (next == null) {
+    vars.currPos[d] = Math.sign(vars.currPos[d]) * vars.maxPos;
+    vars.targetVel[d] = 0;
+    vars.currVel[d] = 0;
+   }
+   else {
+    if (Math.abs(vars.currPos[d]) > .5) {
+     vars.currPos[d] = vars.currPos[d] - Math.sign(vars.currPos[d]);
+     
+     var pos = vars.currPos;
+     var proj = {};
+     proj.currVel = {
+      x: pos.x + vars.currVel.x,
+      y: pos.y + vars.currVel.y,
+      z: pos.z + vars.currVel.z,
+     };
+     proj.targetVel = {
+      x: pos.x + vars.targetVel.x,
+      y: pos.y + vars.targetVel.y,
+      z: pos.z + vars.targetVel.z,
+     };
+     proj.right = {
+      x: pos.x + vars.right.x,
+      y: pos.y + vars.right.y,
+      z: pos.z + vars.right.z,
+     };
+     proj.up = {
+      x: pos.x + vars.up.x,
+      y: pos.y + vars.up.y,
+      z: pos.z + vars.up.z,
+     };
+     proj.facing = {
+      x: pos.x + vars.facing.x,
+      y: pos.y + vars.facing.y,
+      z: pos.z + vars.facing.z,
+     };
+     
+     var inverse = next.transform;
+     var posInv = map.twistr(pos, inverse);
+     pos = map.twistr(pos, next.transform);
+     proj.currVel = map.twistr(proj.currVel, next.transform)
+     proj.targetVel = map.twistr(proj.targetVel, next.transform)
+     proj.r = map.twistr({x:1, y:0, z:0}, inverse)
+     proj.u = map.twistr({x:0, y:1, z:0}, inverse)
+     proj.f = map.twistr({x:0, y:0, z:1}, inverse)
+     
+     vars.currVel = {
+      x: proj.currVel.x - pos.x,
+      y: proj.currVel.y - pos.y,
+      z: proj.currVel.z - pos.z,
+     };
+     vars.targetVel = {
+      x: proj.targetVel.x - pos.x,
+      y: proj.targetVel.y - pos.y,
+      z: proj.targetVel.z - pos.z,
+     };
+     
+     var orig = {
+      r: vars.right,
+      u: vars.up,
+      f: vars.facing,
+     };
+     vars.right = {
+      x: orig.r.x * proj.r.x + orig.u.x * proj.u.x + orig.f.x * proj.f.x,
+      y: orig.r.y * proj.r.x + orig.u.y * proj.u.x + orig.f.y * proj.f.x,
+      z: orig.r.z * proj.r.x + orig.u.z * proj.u.x + orig.f.z * proj.f.x,
+     };
+     vars.up = {
+      x: orig.r.x * proj.r.y + orig.u.x * proj.u.y + orig.f.x * proj.f.y,
+      y: orig.r.y * proj.r.y + orig.u.y * proj.u.y + orig.f.y * proj.f.y,
+      z: orig.r.z * proj.r.y + orig.u.z * proj.u.y + orig.f.z * proj.f.y,
+     };
+     vars.facing = {
+      x: orig.r.x * proj.r.z + orig.u.x * proj.u.z + orig.f.x * proj.f.z,
+      y: orig.r.y * proj.r.z + orig.u.y * proj.u.z + orig.f.y * proj.f.z,
+      z: orig.r.z * proj.r.z + orig.u.z * proj.u.z + orig.f.z * proj.f.z,
+     };
+     
+     vars.currPos = pos;
+     vars.currCube = next.cube;
+    }
+   }
+  }
+ });
 }
 
 
@@ -141,19 +287,18 @@ function main() {
  
  
  // Setup uniform values
- updateUniforms(gl, uniforms, vars);
+ setupVars();
+ updateVars(0);
+ updateUniforms(gl, uniforms);
  
  // Resize canvas to proper size
  resize();
  
  // Render loop
  function render(elapsed) {
-  // Calculate time values
-  vars.dt = elapsed / 1000 - vars.time;
-  vars.time = elapsed / 1000;
-  
   // Update uniform values
-  updateUniforms(gl, uniforms, vars);
+  updateVars(elapsed);
+  updateUniforms(gl, uniforms);
   
   // Render to framebuffer
   targetFramebuffer(gl, framebuffer, texture);
@@ -248,11 +393,19 @@ function onmousemove(event) {
 }
 
 function onkeydown(event) {
- keys[event.code] = true;
+ Object.keys(bindings).forEach(function(key) {
+  if (bindings[key].has(event.code)) {
+   pressed[key] = true;
+  }
+ });
 }
 
 function onkeyup(event) {
- keys[event.code] = false;
+ Object.keys(bindings).forEach(function(key) {
+  if (bindings[key].has(event.code)) {
+   pressed[key] = false;
+  }
+ });
 }
 
 
@@ -346,9 +499,9 @@ function initTexture(gl) {
   vars.mapSize.y = img.height;
  }
  
- img.map = new MapMaker(img);
- img.map.add(1, 4, 2);
- img.map.add(1, 5, 2, 3);
+ map = new MapMaker(img);
+ map.add(1, 4, 2);
+ map.add(1, 5, 2, 3);
  
  return texture;
 }
