@@ -250,9 +250,8 @@ function updateVars(elapsed) {
  }.bind(this));
  
  if (pressed.Load) {
-  var mname = prompt(map.listSaved().join("\n"));
-  var loaded = map.loadMap(mname);
-  if (loaded) {
+  var index = prompt("To load a level, type its name. \nHit Enter to cancel.\n\n" + map.listSaved().join("\n"));
+  if (map.loadMap(index)) {
    vars.currPos = {x: 0, y: 0, z: 0};
    vars.currVel = {x: 0, y: 0, z: 0};
    vars.targetVel = {x: 0, y: 0, z: 0};
@@ -528,19 +527,8 @@ function initTexture(gl) {
   vars.mapSize.y = img.height;
  }
  
- map = new MapMaker(img, 11);
- map.add(1, 0, 2);
- map.add(2, 0, 3, 23);
- map.add(3, 0, 4);
- map.add(4, 0, 5, 23);
- map.add(5, 0, 6);
- map.add(6, 0, 7, 23);
- map.add(7, 0, 8);
- map.add(8, 0, 9, 23);
- map.add(9, 0, 10);
- map.add(10, 0, 1, 23);
- map.add(1, 3, 11);
- map.add(11, 3, 1);
+ map = new MapMaker(img, 1);
+ map.loadMap(1);
  
  return texture;
 }
