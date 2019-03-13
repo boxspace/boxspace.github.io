@@ -76,6 +76,7 @@ const bindings = {
  Yneg: new Set(["KeyQ", "ShiftLeft", "ShiftRight"]),
  Zpos: new Set(["KeyW", "ArrowUp"]),
  Zneg: new Set(["KeyS", "ArrowDown"]),
+ Load: new Set(["KeyL"]),
 };
 
 const pressed = {
@@ -246,7 +247,24 @@ function updateVars(elapsed) {
     }
    }
   }
- });
+ }.bind(this));
+ 
+ if (pressed.Load) {
+  var mname = prompt(map.listSaved().join("\n"));
+  var loaded = map.loadMap(mname);
+  if (loaded) {
+   vars.currPos = {x: 0, y: 0, z: 0};
+   vars.currVel = {x: 0, y: 0, z: 0};
+   vars.targetVel = {x: 0, y: 0, z: 0};
+   vars.currCube = 1;
+   vars.right = {x: 1, y: 0, z: 0};
+   vars.up = {x: 0, y: 1, z: 0};
+   vars.facing = {x: 0, y: 0, z: 1};
+   vars.theta = 0;
+   vars.phi = 0;
+  }
+  keyreset();
+ }
 }
 
 
@@ -397,7 +415,7 @@ function onkeydown(event) {
   if (bindings[key].has(event.code)) {
    pressed[key] = true;
   }
- });
+ }.bind(this));
 }
 
 function onkeyup(event) {
@@ -405,7 +423,18 @@ function onkeyup(event) {
   if (bindings[key].has(event.code)) {
    pressed[key] = false;
   }
- });
+ }.bind(this));
+}
+
+function keyreset(key) {
+ if (key != null) {
+  pressed[key] = false;
+ }
+ else {
+  Object.keys(bindings).forEach(function(key) {
+   pressed[key] = false;
+  }.bind(this));
+ }
 }
 
 

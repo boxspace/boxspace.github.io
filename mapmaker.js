@@ -2,10 +2,9 @@ function MapMaker(img, size) {
   this.bmp = new BMPImage(6, size);
   this.image = img;
   this.map = {};
-  MapMaker.inst = this;
 }
 
-MapMaker.prototype.inverted = [0, 2, 1, 15, 4, 23, 6, 14, 19, 9, 10, 11, 12, 20, 7, 3, 22, 17, 18, 8, 13, 21, 16, 5]
+MapMaker.prototype.inverted = [0, 2, 1, 15, 4, 23, 6, 14, 19, 9, 10, 11, 12, 20, 7, 3, 22, 17, 18, 8, 13, 21, 16, 5];
 
 MapMaker.prototype.twistr = function(v, id) {
   a = id % 3;
@@ -19,11 +18,11 @@ MapMaker.prototype.twistr = function(v, id) {
   v = (c == 1) ? {x: -v.x,  y: -v.y,  z:  v.z} : v;
   v = (d == 1) ? {x:  v.x,  y: -v.y,  z: -v.z} : v;
   return v;
-}
+};
 
 MapMaker.prototype.get = function(cubeA, sideA) {
  return this.map[cubeA * 6 + sideA - 5];
-}
+};
 
 MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
   transform = (transform == null) ? 0 : transform;
@@ -54,8 +53,58 @@ MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
   this.map[cubeA * 6 + sideA - 5] = {cube: cubeB, transform: transform};
   this.map[cubeB * 6 + sideB - 5] = {cube: cubeA, transform: inverted};
   this.write();
-}
+};
 
 MapMaker.prototype.write = function() {
   this.image.src = this.bmp.build();
-}
+};
+
+MapMaker.prototype.listSaved = function() {
+ return Object.keys(this.saved);
+};
+
+MapMaker.prototype.loadMap = function(mapname) {
+ if (mapname in this.saved) {
+  var save = this.saved[mapname];
+  this.bmp = new BMPImage(6, save.size);
+  this.map = {};
+  save.data.forEach(function (entry) {
+   if (entry.length == 3) {
+    this.add(entry[0], entry[1], entry[2]);
+   }
+   else {
+    this.add(entry[0], entry[1], entry[2], entry[3]);
+   }
+  }.bind(this));
+ }
+ return (mapname in this.saved);
+};
+
+MapMaker.prototype.saved = {
+ "Basic Loop": {
+  size: 2,
+  data: [
+   [1,4,2],
+   [1,5,2,3],
+  ],
+ },
+
+ "Order-5": {
+  size: 11,
+  data: [
+   [1,0,2],
+   [2,0,3,23],
+   [3,0,4],
+   [4,0,5,23],
+   [5,0,6],
+   [6,0,7,23],
+   [7,0,8],
+   [8,0,9,23],
+   [9,0,10],
+   [10,0,1,23],
+   [1,3,11],
+   [11,3,1],
+  ],
+ },
+
+};
