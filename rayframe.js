@@ -72,8 +72,8 @@ const dims = ["x", "y", "z"];
 const bindings = {
  Xpos: new Set(["KeyD", "ArrowRight"]),
  Xneg: new Set(["KeyA", "ArrowLeft"]),
- Ypos: new Set(["KeyQ", "Space", "Slash"]),
- Yneg: new Set(["KeyE", "ShiftLeft", "ShiftRight"]),
+ Ypos: new Set(["KeyE", "Space", "Slash"]),
+ Yneg: new Set(["KeyQ", "ShiftLeft", "ShiftRight"]),
  Zpos: new Set(["KeyW", "ArrowUp"]),
  Zneg: new Set(["KeyS", "ArrowDown"]),
 };
