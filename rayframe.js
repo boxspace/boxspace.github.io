@@ -516,6 +516,7 @@ function initTexture(gl) {
  
  const img = new Image();
  img.onload = function() {
+  // This function is called when the image source changes (though not immediately)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);

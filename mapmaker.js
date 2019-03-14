@@ -24,9 +24,13 @@ MapMaker.prototype.get = function(cubeA, sideA) {
  return this.map[cubeA * 6 + sideA - 5];
 };
 
-MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
-  transform = (transform == null) ? 0 : transform;
-  var inverted = this.inverted[transform];
+MapMaker.prototype.gen = function(cubeA, sideA, cubeB, transformA) {
+  var size = Math.max(cubeA, cubeB);
+  if (size > this.bmp.h) {
+   this.bmp.resize(null, size);
+  }
+  transformA = (transformA == null) ? 0 : transformA;
+  var transformB = this.inverted[transformA];
   var sign = 1 - 2 * (sideA % 2);
   sign = -1 * sign;  // get opposite side
   var testVec = {
@@ -34,26 +38,84 @@ MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
     y: sideA == 2 || sideA == 3 ? sign : 0,
     z: sideA == 4 || sideA == 5 ? sign : 0,
   };
-  testVec = this.twistr(testVec, transform);
+  testVec = this.twistr(testVec, transformA);
   sideB = 0.5 * (testVec.x * (1 * testVec.x - 1) + testVec.y * (5 * testVec.y - 1) + testVec.z * (9 * testVec.z - 1));
   
-  var colA = this.bmp.get(sideA, cubeA - 1);
-  var colB = this.bmp.get(sideB, cubeB - 1);
-  colA[0] = cubeB;
-  colA[1] = transform;
-  colA[2] = 127;
-  colB[0] = cubeA;
-  colB[1] = inverted;
-  colB[2] = 255;
+  var indexA = cubeA * 6 + sideA - 5;
+  var indexB = cubeB * 6 + sideB - 5;
+  var oldA = this.map[indexA];
+  var oldB = this.map[indexB];
+  return {
+    cubeA: cubeA,
+    cubeB: cubeB,
+    sideA: sideA,
+    sideB: sideB,
+    transformA: transformA,
+    transformB: transformB,
+    indexA: indexA,
+    indexB: indexB,
+    linkA: {
+      cube: cubeB,
+      transform: transformA,
+      side: sideB,
+    },
+    linkB: {
+      cube: cubeA,
+      transform: transformB,
+      side: sideA,
+    },
+    size: Math.max(cubeA, cubeB),
+    free: (cubeA * 6 + sideA != cubeB * 6 + sideB) && (oldA == null) && (oldB == null),
+    exists: (oldA != null) && (oldB != null),
+  }
+}
+
+MapMaker.prototype.add = function(cubeA, sideA, cubeB, transform) {
+  var link = this.gen(cubeA, sideA, cubeB, transform);
+  if (!link.free) {
+    console.log("Error during add(" + cubeA + ", " + sideA + ", " + cubeB + ((transform == null ? "" : ", " + transform)) + "): portal already in place");
+  }
+  else {
+   this.map[link.indexA] = link.linkA;
+   this.map[link.indexB] = link.linkB;
+   
+   var colA = this.bmp.get(sideA, cubeA - 1);
+   var colB = this.bmp.get(sideB, cubeB - 1);
+   colA[0] = link.linkA.cube;
+   colA[1] = link.linkA.transform;
+   colA[2] = 127;
+   colB[0] = link.linkB.cube;
+   colB[1] = link.linkB.transform;
+   colB[2] = 255;
+    
+   this.bmp.set(sideA, cubeA - 1, colA);
+   this.bmp.set(sideB, cubeB - 1, colB);
+   this.write();
+    console.log("Successful add(" + cubeA + ", " + sideA + ", " + cubeB + ((transform == null ? "" : ", " + transform)) + ")");
+  }
+};
+
+MapMaker.prototype.del = function(cubeA, sideA) {
+ var indexA = cubeA * 6 + sideA - 5;
+ if (this.map[indexA] == null) {
+  console.log("Error during add(" + cubeA + ", " + sideA + "): portal does not exist");
+ }
+ else {
+  var linkA = this.map[indexA];
+  var cubeB = linkA.cube;
+  var sideB = linkA.side;
+  var indexB = cubeB * 6 + sideB - 5;
+  this.map[indexA] = null;
+  this.map[indexB] = null;
   
-  //console.log(cubeA, sideA, transform);
-  //console.log(cubeB, sideB, inverted);
+  var colA = [0, 0, 0];
+  var colB = [0, 0, 0];
   this.bmp.set(sideA, cubeA - 1, colA);
   this.bmp.set(sideB, cubeB - 1, colB);
-  this.map[cubeA * 6 + sideA - 5] = {cube: cubeB, transform: transform};
-  this.map[cubeB * 6 + sideB - 5] = {cube: cubeA, transform: inverted};
   this.write();
-};
+  console.log("Successful del(" + cubeA + ", " + sideA + ")");
+ }
+}
 
 MapMaker.prototype.write = function() {
   this.image.src = this.bmp.build();
@@ -66,8 +128,8 @@ MapMaker.prototype.listSaved = function() {
 MapMaker.prototype.loadMap = function(index) {
  if (0 <= --index && index < this.saved.length) {
   var save = this.saved[index];
-  var size = save.data.map(entry => Math.max(entry[0], entry[2])).reduce((a, b) => Math.max(a, b));
-  this.bmp = new BMPImage(6, size);
+  console.log("Loading map \"" + save.name + "\"");
+  this.bmp = new BMPImage(6, 1);
   this.map = {};
   save.data.forEach(function (entry) {
    if (entry.length == 3) {
