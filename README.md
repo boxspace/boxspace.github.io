@@ -7,7 +7,7 @@ Controls:
  - Click to enter fullscreen and mouse capture
  - Mouse to look around (orbit control)
  - WASD or arrows to move forward/backward/left/right
- - E or Space to move upward
- - Q or Shift or / to move downward
+ - E, Space, or `/` to move upward
+ - Q or Shift to move downward
 
 Explore it [here](https://boxspace.github.io/raycaster.html).
